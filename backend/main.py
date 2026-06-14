@@ -4,7 +4,7 @@ import base64
 import random
 from datetime import datetime, timedelta
 from typing import Optional
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -44,6 +44,22 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# 🎯 2. เพิ่มสคริปต์นี้เข้าไป: ดักจับและบังคับตอบกลับ 200 OK ทันทีหากหน้าบ้านยิง OPTIONS เข้ามา เช็กก่อนเข้าถึงฟังก์ชันหลัก
+@app.middleware("http")
+async def cors_preflight_middleware(request: Request, call_next):
+    # ถ้าหน้าบ้านส่งคำสั่งเช็กประตู (OPTIONS) เข้ามา
+    if request.method == "OPTIONS":
+        response = Response(status_code=200)
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
+        return response
+    
+    # ถ้าเป็นคำสั่งปกติ (เช่น POST ภาพสแกนใบหน้า) ให้ปล่อยไหลไปทำงานตามปกติ
+    response = await call_next(request)
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    return response
 
 @app.post("/api/auth/login-face")
 async def login_face_api(payload: dict): # รีเซ็ตรับค่า payload ดูก่อน
