@@ -65,8 +65,8 @@ function switchTab(mode) {
         : 'flex-1 pb-3 font-medium text-slate-400';
 }
 
-// 🔹 ฟังก์ชันเปิดใช้งานกล้องเว็บแคม
-async function startWebcam() {
+// 🎯 เติมคำว่า async ไว้หน้า function เพื่อให้ภายในฟังก์ชันใช้คำสั่ง await ได้อย่างถูกต้อง
+async function startWebcam() { 
     if (placeholder) placeholder.classList.add('hidden');
     if (video) video.classList.remove('hidden');
     if (canvas) canvas.classList.add('hidden');
@@ -75,6 +75,7 @@ async function startWebcam() {
     toggleCamSpinner(false);
 
     try {
+        // คราวนี้คำสั่ง await บรรทัดที่ 20 จะทำงานได้ปกติ ไม่เออเร่อแล้วครับ
         const stream = await navigator.mediaDevices.getUserMedia({ 
             video: { 
                 width: { ideal: 400 }, 
