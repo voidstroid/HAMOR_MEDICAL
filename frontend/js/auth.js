@@ -102,22 +102,19 @@ function stopWebcam() {
     toggleCamSpinner(false);
 }
 
-// 📸 ฟังก์ชันจับภาพนิ่งจากสัญญาณวิดีโอ (Snapshot)
-function captureSnapshot() {
+async function captureSnapshot() {
     if (!video) return;
     
     toggleCamSpinner(true, "⚡ กำลังบันทึกพิกัดใบหน้า...");
 
-    setTimeout(() => {
+    setTimeout(async () => { // 🎯 เติม async หน้า Arrow Function ตรงนี้ด้วยครับ
         try {
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             
-            // 🎯 ปรับปรุงจุดที่ 2: ใช้ .split(',')[1] เพื่อเฉือนส่วนหัวข้อความออก ส่งเฉพาะสายข้อมูลดิบให้ Gemini
-            const fullBase64 = canvas.toDataURL('image/jpeg');
-            base64ImageString = fullBase64.split(',')[1];
+            base64ImageString = canvas.toDataURL('image/jpeg').split(',')[1];
             
             video.classList.add('hidden');
             canvas.classList.remove('hidden');
@@ -125,7 +122,7 @@ function captureSnapshot() {
 
             if (currentMode === 'login') {
                 toggleCamSpinner(true, "🔮 AI กำลังวิเคราะห์อัตลักษณ์ใบหน้า...");
-                processFaceLogin();
+                await processFaceLogin(); // 🎯 เติม await หน้านี้ด้วย
             } else {
                 toggleCamSpinner(false);
                 alert("บันทึกพิกัดใบหน้าเรียบร้อย! กรุณากรอกฟอร์มต่อให้ครบถ้วนแล้วกดลงทะเบียน");
@@ -219,8 +216,9 @@ async function submitPasswordLogin() {
 }
 
 // 🔹 ฟังก์ชันเรียกประมวลผลระบบสแกนใบหน้า
-function submitFaceLogin() {
-    processFaceLogin();
+// ✅ เติม async หน้า function และเติม await หน้าฟังก์ชันข้างใน
+async function submitFaceLogin() {
+    await processFaceLogin();
 }
 
 // 🔹 API: ล็อกอินด้วยระบบสแกนใบหน้า (Face Login Engine)
