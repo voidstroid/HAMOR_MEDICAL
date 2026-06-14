@@ -21,11 +21,27 @@ ai_client = None
 if GEMINI_API_KEY:
     try:
         ai_client = genai.Client(api_key=GEMINI_API_KEY)
-        print("🚀 [CareSync AI] เชื่อมต่อระบบเวชระเบียนอัจฉริยะ Gemini สำเร็จ")
+        print("🚀 [HAMOR AI] เชื่อมต่อระบบเวชระเบียนอัจฉริยะ Gemini สำเร็จ")
     except Exception as e:
-        print(f"⚠️ [CareSync AI] ไม่สามารถเปิดใช้งาน Gemini SDK ได้: {e}")
+        print(f"⚠️ [HAMOR AI] ไม่สามารถเปิดใช้งาน Gemini SDK ได้: {e}")
 
-app = FastAPI(title="CareSync Total Unified API")
+app = FastAPI(title="HAMOR Total Unified API")
+
+# 1. ระบุชื่อโดเมนหน้าบ้านของคุณให้ชัดเจน (หรือใส่ "*" เพื่อเปิดรับทั้งหมด)
+origins = [
+    "https://voidstroid.github.io",
+    "http://localhost:5500",  # สำหรับเวลาคุณเปิดทดสอบในเครื่องตัวเอง (Live Server)
+    "http://127.0.0.1:5500",
+]
+
+# 2. ตั้งค่าการเคลียร์ปลดล็อกสิทธิ์ให้เข้าถึงได้จากภายนอก
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # 🌟 บังคับเปิดอิสระชั่วคราวเพื่อให้ GitHub Pages ดึงข้อมูลได้แน่นอน
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.add_middleware(
     CORSMiddleware,
