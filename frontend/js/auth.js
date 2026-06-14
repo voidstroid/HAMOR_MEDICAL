@@ -6,28 +6,28 @@
 let currentMode = 'login';
 let base64ImageString = null;
 
+// 🎯 ปรับปรุงจุดที่ 1: กำหนดที่อยู่เซิร์ฟเวอร์ Vercel หลังบ้านให้ชัดเจนถาวร
+const BACKEND_URL = "https://hamor-medical.vercel.app";
+
 // ดึง Elements ที่ต้องใช้งานร่วมกันจากหน้าเว็บ (auth.html)
 const video = document.getElementById('webcam');
 const canvas = document.getElementById('capturedCanvas');
 const placeholder = document.getElementById('camPlaceholder');
 const captureBtn = document.getElementById('btnCapture');
 
-// 🎯 ฟังก์ชันเสกตัวหมุนให้ลอยครอบตำแหน่งของ "กล้อง" พอดีเป๊ะ (ไม่ต้องยุ่งกับ HTML)
+// 🎯 ฟังก์ชันเสกตัวหมุนให้ลอยครอบตำแหน่งของ "กล้อง" พอดีเป๊ะ
 function toggleCamSpinner(show, message = "กำลังประมวลผล...") {
     let spinnerBox = document.getElementById('camDynamicSpinner');
     
     if (show) {
-        // หา Element หลักที่เป็นตัวคลุมกล้อง (หาพื้นที่อ้างอิงเพื่อแปะ Spinner ลงไป)
         const targetContainer = video ? video.parentElement : null;
         if (!targetContainer) return;
 
-        // บังคับให้ Parent ของกล้องรองรับการซ้อนวัตถุแบบ Relative
         targetContainer.style.position = 'relative';
 
         if (!spinnerBox) {
             spinnerBox = document.createElement('div');
             spinnerBox.id = 'camDynamicSpinner';
-            // แต่งสไตล์ด้วย Tailwind CSS ให้ลอยอยู่บนตัวเฟรมกล้องแบบ Smooth
             spinnerBox.className = 'absolute inset-0 bg-slate-900/70 backdrop-blur-xs flex flex-col items-center justify-center text-white font-medium z-40 rounded-2xl gap-3 transition-all duration-300';
             spinnerBox.innerHTML = `
                 <div class="relative flex items-center justify-center">
@@ -54,11 +54,9 @@ function switchTab(mode) {
     stopWebcam();
     toggleCamSpinner(false);
     
-    // จัดการแสดงผลฟอร์ม
     document.getElementById('loginForm').classList.toggle('hidden', mode !== 'login');
     document.getElementById('registerForm').classList.toggle('hidden', mode !== 'register');
     
-    // จัดการสไตล์ของปุ่มแท็บ
     document.getElementById('tabLogin').className = mode === 'login' 
         ? 'flex-1 pb-3 font-bold text-teal-600 border-b-2 border-teal-600' 
         : 'flex-1 pb-3 font-medium text-slate-400';
@@ -107,10 +105,8 @@ function stopWebcam() {
 function captureSnapshot() {
     if (!video) return;
     
-    // 🎯 สั่งแสดงวงกลมหมุนอนิเมชันคร่อมทับบนกล้องทันทีที่กด "📸 กดบันทึกภาพถ่ายใบหน้ามุมตรง"
     toggleCamSpinner(true, "⚡ กำลังบันทึกพิกัดใบหน้า...");
 
-    // หน่วงเวลา 60ms เพื่อยอมให้ UI วาดสปินเนอร์ขึ้นมาก่อนที่จะประมวลผลบิตแมปภาพขนาดใหญ่
     setTimeout(() => {
         try {
             canvas.width = video.videoWidth;
@@ -118,19 +114,18 @@ function captureSnapshot() {
             const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             
-            base64ImageString = canvas.toDataURL('image/png');
+            // 🎯 ปรับปรุงจุดที่ 2: ใช้ .split(',')[1] เพื่อเฉือนส่วนหัวข้อความออก ส่งเฉพาะสายข้อมูลดิบให้ Gemini
+            const fullBase64 = canvas.toDataURL('image/jpeg');
+            base64ImageString = fullBase64.split(',')[1];
             
-            // แสดงรูปภาพที่บันทึกแล้วนิ่งไว้บนหน้าจอเพื่อความสวยงาม
             video.classList.add('hidden');
             canvas.classList.remove('hidden');
             captureBtn.classList.add('hidden');
 
             if (currentMode === 'login') {
-                // เปลี่ยนข้อความเป็นสถานะยิงปัญญาประดิษฐ์สแกนจับคู่ระเบียนคนไข้
                 toggleCamSpinner(true, "🔮 AI กำลังวิเคราะห์อัตลักษณ์ใบหน้า...");
                 processFaceLogin();
             } else {
-                // โหมดสมัครสมาชิก: ทำการซ่อนสปินเนอร์เพื่อให้คนไข้เห็นใบหน้าตัวเอง และกรอกฟอร์มต่อ
                 toggleCamSpinner(false);
                 alert("บันทึกพิกัดใบหน้าเรียบร้อย! กรุณากรอกฟอร์มต่อให้ครบถ้วนแล้วกดลงทะเบียน");
                 if (video.srcObject) video.srcObject.getTracks().forEach(track => track.stop());
@@ -162,7 +157,8 @@ async function submitRegister() {
 
     try {
         toggleCamSpinner(true, "👤 กำลังบันทึกเวชระเบียน...");
-        const res = await fetch('/api/patient/register', { 
+        // 🎯 ยิงข้อมูลหาพาร์ท Vercel เต็มรูปแบบ
+        const res = await fetch(`${BACKEND_URL}/api/patient/register`, { 
             method: 'POST', 
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -183,7 +179,7 @@ async function submitRegister() {
     }
 }
 
-// ⌨️ ฟังก์ชันเข้าสู่ระบบด้วยรหัสผ่านปกติ (Password Login)
+// 🔑 ฟังก์ชันเข้าสู่ระบบด้วยรหัสผ่านปกติ (Password Login)
 async function submitPasswordLogin() {
     const username = document.getElementById('loginUser').value.trim();
     const password = document.getElementById('loginPass').value.trim();
@@ -195,7 +191,8 @@ async function submitPasswordLogin() {
 
     try {
         toggleCamSpinner(true, "🔑 กำลังยืนยันรหัสผ่าน...");
-        const response = await fetch('/api/auth/login-password', {
+        // 🎯 ยิงข้อมูลหาพาร์ท Vercel เต็มรูปแบบ
+        const response = await fetch(`${BACKEND_URL}/api/auth/login-password`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -239,10 +236,10 @@ async function processFaceLogin() {
     };
 
     try {
-        // รักษาเอฟเฟกต์ตัวหมุนและปรับข้อความให้ชัดเจน
         toggleCamSpinner(true, "🔮 AI กำลังวิเคราะห์อัตลักษณ์ใบหน้า...");
 
-        const response = await fetch('/api/auth/login-face', {
+        // 🎯 ยิงข้อมูลหาพาร์ท Vercel เต็มรูปแบบ
+        const response = await fetch(`${BACKEND_URL}/api/auth/login-face`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -251,8 +248,6 @@ async function processFaceLogin() {
         });
 
         const data = await response.json();
-        
-        // 🛑 เคลียร์ซ่อนตัวหมุนออกจากเฟร้มกล้องทันทีที่ได้รับข้อมูลส่งกลับจาก Backend
         toggleCamSpinner(false);
 
         if (response.ok && data.success) {
