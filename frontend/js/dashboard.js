@@ -4,7 +4,7 @@
  * ==================================================================
  */
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api/patient';
+const API_BASE_URL = '/api/patient';
 const userId = localStorage.getItem('care_user_id');
 const userName = localStorage.getItem('care_user_name');
 let fullHistoryData = []; // State ข้อมูลกลางประจำหน้าแอป SPA
