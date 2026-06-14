@@ -1,9 +1,11 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from typing import Optional
 
 app = FastAPI()
 
+# ปลดล็อก CORS ครอบคลุมทุกโดเมน
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -12,48 +14,86 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# --- ข้อมูลโครงสร้าง (Data Models) ---
 class FaceLoginPayload(BaseModel):
     username: str
     image: str
 
+class PasswordLoginPayload(BaseModel):
+    username: str
+    password: str
+
+class RegisterPayload(BaseModel):
+    username: str
+    password: str
+    fullName: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+
+# --- 1. พาร์ทสแกนใบหน้า (Face Login) ---
 @app.post("/api/auth/login-face")
 async def login_face_api(payload: FaceLoginPayload):
     try:
         username = payload.username
         image_base64 = payload.image
 
-        # 🛑 เช็กดักบั๊ก: ถ้าหน้าบ้านส่งข้อมูลมาไม่ครบ ห้ามให้ผ่าน
         if not username or not image_base64 or "data:image" not in image_base64:
-            return {
-                "success": False,
-                "detail": "ไม่พบข้อมูลชื่อผู้ใช้ หรือภาพถ่ายใบหน้าผิดพลาด"
-            }
+            return {"success": False, "detail": "ข้อมูลชื่อผู้ใช้หรือภาพถ่ายใบหน้าไม่ถูกต้อง"}
 
-        # -------------------------------------------------------------
-        # 🎯 [จุดใส่โค้ด Gemini AI ของคุณ]
-        # ตัวอย่าง: ค่าเริ่มต้นให้ตรวจสอบผ่าน (คุณเอาฟังก์ชันตรวจจริงมาใส่ตรงนี้ได้เลย)
-        is_authenticated = True 
-        # -------------------------------------------------------------
-
-        if is_authenticated:
-            return {
-                "success": True,
-                "name": username,
-                "user_id": f"PT-{username.upper()}" # ดึงไอดีไปใช้ในหน้าแดชบอร์ดต่อ
-            }
-        else:
-            return {
-                "success": False,
-                "detail": "สแกนใบหน้าไม่ผ่าน อัตลักษณ์ไม่ตรงกับระบบ"
-            }
-
+        # 🎯 ตรงนี้ใส่โค้ดเช็กใบหน้าของ Gemini AI ได้ตามปกติ
+        return {
+            "success": True,
+            "name": username,
+            "user_id": f"PT-{username.upper()}"
+        }
     except Exception as e:
         return {"success": False, "detail": str(e)}
 
+# --- 2. พาร์ทล็อกอินด้วยรหัสผ่าน (Password Login) ---
+@app.post("/api/auth/login-password")
+async def login_password_api(payload: PasswordLoginPayload):
+    try:
+        username = payload.username
+        password = payload.password
+
+        if not username or not password:
+            return {"success": False, "detail": "กรุณากรอกชื่อผู้ใช้และรหัสผ่าน"}
+
+        # 🎯 ตัวอย่างจำลองการตรวจสอบรหัสผ่าน (สามารถเชื่อมต่อฐานข้อมูลจริงตรงนี้ได้)
+        if username and password: 
+            return {
+                "success": True,
+                "name": username,
+                "user_id": f"PT-{username.upper()}"
+            }
+        else:
+            return {"success": False, "detail": "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"}
+    except Exception as e:
+        return {"success": False, "detail": str(e)}
+
+# --- 3. พาร์ทสมัครสมาชิก (Register) ---
+@app.post("/api/patient/register")
+async def register_api(payload: RegisterPayload):
+    try:
+        if not payload.username or not payload.password:
+            return {"success": False, "detail": "กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน"}
+
+        # 🎯 ตัวอย่างจำลองการบันทึกข้อมูลคนไข้ใหม่ลงระบบ
+        return {
+            "success": True,
+            "message": "ลงทะเบียนเวชระเบียนคนไข้ใหม่สำเร็จแล้ว!",
+            "user_id": f"PT-{payload.username.upper()}"
+        }
+    except Exception as e:
+        return {"success": False, "detail": str(e)}
+
+# --- ดักจับคำขอ Preflight (OPTIONS) ของทุกพาร์ทป้องกัน CORS เออเร่อ ---
 @app.options("/api/auth/login-face")
+@app.options("/api/auth/login-password")
+@app.options("/api/patient/register")
 async def options_handler():
     return {"message": "OK"}
 
 @app.get("/api")
 async def health_check():
-    return {"status": "online", "backend": "FastAPI on Vercel Python 3.12"}
+    return {"status": "online", "message": "HAMOR API Gateway is fully operational!"}
