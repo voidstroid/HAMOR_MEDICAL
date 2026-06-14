@@ -25,43 +25,16 @@ if GEMINI_API_KEY:
     except Exception as e:
         print(f"⚠️ [HAMOR AI] ไม่สามารถเปิดใช้งาน Gemini SDK ได้: {e}")
 
-app = FastAPI()
+app = FastAPI(title="HAMOR Total Unified API")
 
-# เคลียร์ทาง CORS ระดับโค้ด
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# 1. ระบุชื่อโดเมนหน้าบ้านของคุณให้ชัดเจน (หรือใส่ "*" เพื่อเปิดรับทั้งหมด)
+origins = [
+    "https://voidstroid.github.io",
+    "http://localhost:5500",  # สำหรับเวลาคุณเปิดทดสอบในเครื่องตัวเอง (Live Server)
+    "http://127.0.0.1:5500",
+]
 
-class FaceLoginPayload(BaseModel):
-    username: str
-    image: str
-
-# 🎯 กฎเหล็กของ Vercel Zero-Config: พาร์ทของฟังก์ชันต้องตัดคำว่า /api ออก 
-# เพราะตัว Vercel จะเอาชื่อโฟลเดอร์มาแปะนำหน้าให้โดยอัตโนมัติอยู่แล้วครับ
-@app.post("/auth/login-face")
-async def login_face_api(payload: FaceLoginPayload):
-    try:
-        # โค้ดเชื่อมต่อประมวลผลรูปภาพกับ Gemini AI ของคุณ...
-        return {
-            "success": True,
-            "name": "ยินดีต้อนรับ! ระบบ Python ฟื้นคืนชีพแล้ว",
-            "user_id": "PT-999"
-        }
-    except Exception as e:
-        return {"success": False, "detail": str(e)}
-
-# ดักจับคำขอ Preflight สำหรับระบบหลังบ้าน
-@app.options("/auth/login-face")
-async def options_handler():
-    return {"message": "OK"}
-
-@app.get("/")
-async def root():
-    return {"status": "online", "message": "FastAPI on Vercel is working!"}
+# 2. ตั้งค่าการเคลียร์ปลดล็อกสิทธิ์ให้เข้าถึงได้จากภายนอก
 
 # 🔍 ปรับแก้บรรทัดพาร์ทเริ่มต้นใน main.py (หรือ api/index.py) ของคุณ:
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # เติม dirname ครอบอีกชั้นเพื่อถอยออกจากโฟลเดอร์ api
