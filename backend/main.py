@@ -35,10 +35,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# โฟลเดอร์จัดเก็บรูปภาพอ้างอิงอ้างอิงตามคอมพิวเตอร์ของคุณ
-DB_DOC_IMG_DIR = r"D:\VScode\medical_project\backend\doctor_images"
+# 🔍 ค้นหาและแก้จุดนี้ใน main.py ของคุณให้เป็นระบบ Relative Path
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# โฟลเดอร์จัดเก็บรูปภาพแพทย์ (ชี้ไปที่โฟลเดอร์ doctor_images ในโปรเจกต์อัตโนมัติ)
+DB_DOC_IMG_DIR = os.path.join(BASE_DIR, "doctor_images")
 if not os.path.exists(DB_DOC_IMG_DIR):
-    os.makedirs(DB_DOC_IMG_DIR, exist_ok=True)
+    os.makedirs(DB_DOC_IMG_DIR)
 
 FACE_DIR = r"D:\VScode\medical_project\backend\patient_faces"
 
