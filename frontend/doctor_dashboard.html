@@ -159,7 +159,7 @@
 
         async function loadDoctorAppointments() {
             try {
-                const response = await fetch(`http://127.0.0.1:8000/api/doctor/appointments/${docId}`);
+                const response = await fetch(`/api/doctor/appointments/${docId}`);
                 const data = await response.json();
                 globalAppointments = data.appointments || [];
                 renderTable(globalAppointments);
@@ -264,7 +264,7 @@
             }
 
             try {
-                const response = await fetch('http://127.0.0.1:8000/api/doctor/update-status', {
+                const response = await fetch('/api/doctor/update-status', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ apt_id: aptId, status: status, remark: remark })
@@ -290,7 +290,7 @@
     </script>
     <script>
     let srvActivePatientId = null; 
-    const DOC_TELE_URL = "http://127.0.0.1:8000/api/telehealth";
+    const DOC_TELE_URL = "/api/telehealth";
 
     // ตัวรับฝั่งหมอจะตรวจพบสมาชิกใหม่ และทำการ Sort เรียงลำดับรหัสคนไข้จากน้อยไปมากให้อัตโนมัติ:
 async function fetchServerPatientList() {
