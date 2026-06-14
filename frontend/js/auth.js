@@ -12,17 +12,6 @@ const canvas = document.getElementById('capturedCanvas');
 const placeholder = document.getElementById('camPlaceholder');
 const captureBtn = document.getElementById('btnCapture');
 
-// บรรทัดที่ระบุค่าลิงก์ Vercel หลังบ้าน (ห้ามมีสแลชปิดท้าย)
-const BACKEND_URL = "https://hamor-medical.vercel.app";
-
-// บรรทัดที่สั่งยิง fetch (บรรทัดที่ 245)
-// ตรวจสอบดูว่าเขียนพาร์ทชนกันถูกต้องไหม เช่น:
-const response = await fetch(`${BACKEND_URL}/api/auth/login-face`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-});
-
 // 🎯 ฟังก์ชันเสกตัวหมุนให้ลอยครอบตำแหน่งของ "กล้อง" พอดีเป๊ะ (ไม่ต้องยุ่งกับ HTML)
 function toggleCamSpinner(show, message = "กำลังประมวลผล...") {
     let spinnerBox = document.getElementById('camDynamicSpinner');
