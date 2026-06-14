@@ -27,15 +27,7 @@ if GEMINI_API_KEY:
 
 app = FastAPI()
 
-# 1. ระบุชื่อโดเมนหน้าบ้านของคุณให้ชัดเจน (หรือใส่ "*" เพื่อเปิดรับทั้งหมด)
-origins = [
-    "https://voidstroid.github.io",
-    "http://localhost:5500",  # สำหรับเวลาคุณเปิดทดสอบในเครื่องตัวเอง (Live Server)
-    "http://127.0.0.1:5500",
-]
-
-# 2. ตั้งค่าการเคลียร์ปลดล็อกสิทธิ์ให้เข้าถึงได้จากภายนอก
-# ปลดล็อก CORS ระดับซอฟต์แวร์ควบคู่กัน
+# เคลียร์ทาง CORS ระดับโค้ด
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -44,26 +36,32 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 🎯 ฟังก์ชันหลักที่หน้าบ้านเรียก
-@app.post("/api/auth/login-face")
-async def login_face_api(payload: FaceLoginPayload):
-    return {
-        "success": True,
-        "name": "เชื่อมต่อ Python ผ่าน Vercel สำเร็จแล้ว"
-    }
-
-# 🎯 เพิ่มตรงนี้เข้าไปด้วย: ดักจับแบบระบุเส้นทางตรง ๆ เผื่อกรณี Preflight ทะลุเข้ามา
-@app.options("/api/auth/login-face")
-async def options_login_face():
-    return {"message": "OK"}
-
 class FaceLoginPayload(BaseModel):
     username: str
     image: str
 
-@app.get("/api")
+# 🎯 กฎเหล็กของ Vercel Zero-Config: พาร์ทของฟังก์ชันต้องตัดคำว่า /api ออก 
+# เพราะตัว Vercel จะเอาชื่อโฟลเดอร์มาแปะนำหน้าให้โดยอัตโนมัติอยู่แล้วครับ
+@app.post("/auth/login-face")
+async def login_face_api(payload: FaceLoginPayload):
+    try:
+        # โค้ดเชื่อมต่อประมวลผลรูปภาพกับ Gemini AI ของคุณ...
+        return {
+            "success": True,
+            "name": "ยินดีต้อนรับ! ระบบ Python ฟื้นคืนชีพแล้ว",
+            "user_id": "PT-999"
+        }
+    except Exception as e:
+        return {"success": False, "detail": str(e)}
+
+# ดักจับคำขอ Preflight สำหรับระบบหลังบ้าน
+@app.options("/auth/login-face")
+async def options_handler():
+    return {"message": "OK"}
+
+@app.get("/")
 async def root():
-    return {"status": "online", "engine": "FastAPI on Vercel Zero-Config"}
+    return {"status": "online", "message": "FastAPI on Vercel is working!"}
 
 # 🔍 ปรับแก้บรรทัดพาร์ทเริ่มต้นใน main.py (หรือ api/index.py) ของคุณ:
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # เติม dirname ครอบอีกชั้นเพื่อถอยออกจากโฟลเดอร์ api
