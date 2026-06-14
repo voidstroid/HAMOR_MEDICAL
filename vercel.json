@@ -8,12 +8,16 @@
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
+      "src": "/api/auth/login-face",
       "headers": {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET,OPTIONS,PATCH,DELETE,POST,PUT",
         "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With"
       },
+      "dest": "api/main.py"
+    },
+    {
+      "src": "/(.*)",
       "dest": "api/main.py"
     }
   ]

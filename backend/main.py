@@ -44,6 +44,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 🎯 ฟังก์ชันหลักที่หน้าบ้านเรียก
+@app.post("/api/auth/login-face")
+async def login_face_api(payload: FaceLoginPayload):
+    return {
+        "success": True,
+        "name": "เชื่อมต่อ Python ผ่าน Vercel สำเร็จแล้ว"
+    }
+
+# 🎯 เพิ่มตรงนี้เข้าไปด้วย: ดักจับแบบระบุเส้นทางตรง ๆ เผื่อกรณี Preflight ทะลุเข้ามา
+@app.options("/api/auth/login-face")
+async def options_login_face():
+    return {"message": "OK"}
+
 class FaceLoginPayload(BaseModel):
     username: str
     image: str
