@@ -75,8 +75,8 @@ async def preflight_handler(rest_of_path: str):
 
 # 🎯 ฟังก์ชันแถม: เอาไว้เปิดเช็กหน้าเว็บหลักเพื่อแก้บั๊ก 404
 @app.get("/")
-async def root_check():
-    return {"status": "online", "message": "HAMOR MEDICAL Backend is fully running on Vercel!"}
+async def root():
+    return {"status": "online", "backend": "Python FastAPI"}
 
 # 🔍 ปรับแก้บรรทัดพาร์ทเริ่มต้นใน main.py (หรือ api/index.py) ของคุณ:
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # เติม dirname ครอบอีกชั้นเพื่อถอยออกจากโฟลเดอร์ api
