@@ -97,3 +97,42 @@ async def options_handler():
 @app.get("/api")
 async def health_check():
     return {"status": "online", "message": "HAMOR API Gateway is fully operational!"}
+
+# --- ข้อมูลโครงสร้างสำหรับระบบคัดกรองโรค (Symptom Screening Model) ---
+class ScreeningPayload(BaseModel):
+    patient_id: str
+    symptoms: str          # อาการที่คนไข้พิมพ์เข้ามา
+    medical_history: Optional[str] = "ไม่มี" # ประวัติโรคประจำตัว
+    vital_signs: Optional[dict] = None     # เช่น ความดัน อุณหภูมิ (ถ้ามี)
+
+# --- 4. พาร์ทตรวจคัดกรองโรคอัตโนมัติด้วย AI ---
+@app.post("/api/telehealth/ai-screening")
+async def ai_screening_api(payload: ScreeningPayload):
+    try:
+        if not payload.symptoms:
+            return {"success": False, "detail": "กรุณาระบุอาการที่ต้องการให้ AI วิเคราะห์"}
+
+        # 🎯 ตรงนี้คือจุดเชื่อมต่อ Gemini API หรือ LLM ของคุณ
+        # ตัวอย่างโครงสร้างการส่ง Prompt ให้ AI วิเคราะห์:
+        # ai_prompt = f"คนไข้อาการ: {payload.symptoms}, ประวัติ: {payload.medical_history}"
+        
+        # 🤖 จำลองผลลัพธ์ที่ AI คัดกรองและสรุปกลับมา (Mock AI Insights)
+        ai_analysis = {
+            "possible_condition": "กลุ่มอาการติดเชื้อในระบบทางเดินหายใจส่วนบน (อาจเป็นไข้หวัดใหญ่)",
+            "risk_level": "Medium", # Low, Medium, High
+            "urgency": "ควรพบแพทย์ภายใน 24-48 ชั่วโมง หรือรับยาตามอาการ",
+            "ai_recommendation": "แนะนำให้พักผ่อนอย่างเพียงพอ ดื่มน้ำอุ่น และทานยาลดไข้ตามอาการ หากมีอาการหายใจหอบเหนื่อยให้รีบพบแพทย์ทันที"
+        }
+
+        return {
+            "success": True,
+            "patient_id": payload.patient_id,
+            "analysis": ai_analysis
+        }
+    except Exception as e:
+        return {"success": False, "detail": str(e)}
+
+# --- ดักจับคำขอ Preflight (OPTIONS) ป้องกัน CORS ให้พาร์ท AI ---
+@app.options("/api/telehealth/ai-screening")
+async def options_ai_screening():
+    return {"message": "OK"}
