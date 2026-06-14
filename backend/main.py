@@ -35,10 +35,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 🔍 ค้นหาและแก้จุดนี้ใน main.py ของคุณให้เป็นระบบ Relative Path
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# 🔍 ปรับแก้บรรทัดพาร์ทเริ่มต้นใน main.py (หรือ api/index.py) ของคุณ:
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # เติม dirname ครอบอีกชั้นเพื่อถอยออกจากโฟลเดอร์ api
 
-# โฟลเดอร์จัดเก็บรูปภาพแพทย์ (ชี้ไปที่โฟลเดอร์ doctor_images ในโปรเจกต์อัตโนมัติ)
+# พาร์ทคลังรูปหมอ และไฟล์ json จะชี้ออกมาด้านนอกได้ถูกต้องแม่นยำ
 DB_DOC_IMG_DIR = os.path.join(BASE_DIR, "doctor_images")
 if not os.path.exists(DB_DOC_IMG_DIR):
     os.makedirs(DB_DOC_IMG_DIR)
