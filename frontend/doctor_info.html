@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏥 ค้นหาแพทย์ผู้เชี่ยวชาญ - HAMOR</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Sarabun', sans-serif; background-color: #f0f7ff; }
+        /* เอฟเฟกต์แสดงชื่อเมื่อ Hover บนรูปภาพ */
+        .doctor-card .doctor-name-overlay {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .doctor-card:hover .doctor-name-overlay {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col justify-between">
+
+    <script>
+        (function() {
+            // ตรวจสอบว่ามี care_user_id บันทึกอยู่ในเครื่องไหม
+            const userId = localStorage.getItem("care_user_id");
+            
+            // ถ้าไม่มีค่า หรือค่าเป็นสายอักขระว่าง หรือเป็นข้อความ 'undefined' จากบั๊กเก่า
+            if (!userId || userId === "" || userId === "undefined") {
+                alert("🚨 กรุณาเข้าสู่ระบบก่อนใช้งานหน้านี้");
+                window.location.href = "auth.html"; // เปลี่ยนเป็นชื่อไฟล์หน้า Login ของคุณ (เช่น auth.html)
+            }
+        })();
+    </script>
+
+    <nav class="bg-white border-b border-sky-100 px-6 py-4 sticky top-0 z-40 shadow-sm">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl font-black text-sky-600 tracking-tight">🩺 HAMOR Find Doctor</span>
+            </div>
+            <a href="dashboard.html" class="text-xs font-bold text-slate-500 hover:text-sky-600 transition flex items-center gap-1">
+                ⬅️ กลับหน้าแดชบอร์ด
+            </a>
+        </div>
+    </nav>
+
+    <main class="flex-1 max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8 space-y-6">
+        
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 bg-white p-6 rounded-3xl border border-sky-100 shadow-xs">
+            <header class="text-center md:text-left">
+                <h1 class="text-xl font-black text-slate-900 tracking-tight">รายชื่อแพทย์ผู้เชี่ยวชาญประจำเวร</h1>
+                <p class="text-xs text-slate-400 mt-0.5">เลือกคลิกที่รูปภาพแพทย์ท่านใดก็ได้เพื่อตรวจสอบประวัติและรายละเอียดข้อมูล</p>
+            </header>
+
+            <div class="w-full md:max-w-xs relative">
+                <label class="block text-[11px] font-bold text-sky-600 mb-1.5 px-1">🔍 ค้นหาคุณหมอในระบบ</label>
+                <input 
+                    type="text" 
+                    id="searchDoctorInput" 
+                    placeholder="พิมพ์ชื่อคุณหมอที่ต้องการค้นหา..." 
+                    class="w-full px-4 py-2 text-xs rounded-xl border border-sky-100 text-slate-700 placeholder-slate-400 focus:border-sky-400 focus:ring-2 focus:ring-sky-100 focus:outline-none transition-all"
+                    oninput="handleDoctorSearch()"
+                >
+            </div>
+        </div>
+
+        <div id="doctorGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            <div class="col-span-full text-center py-12 text-slate-400 text-xs font-medium">⏳ กำลังโหลดข้อมูลแพทย์จากคลังข้อมูลหลังบ้าน...</div>
+        </div>
+
+        <div class="flex items-center justify-center gap-4 pt-4">
+            <button id="btnPrev" onclick="changePage(-1)" class="px-4 py-2 bg-white hover:bg-sky-50 border border-sky-200 text-sky-600 text-xs font-bold rounded-xl transition shadow-sm disabled:opacity-50 disabled:pointer-events-none">
+                ⬅️ ย้อนกลับ
+            </button>
+            <span id="pageIndicator" class="text-xs font-bold text-slate-600">หน้า 1 / 1</span>
+            <button id="btnNext" onclick="changePage(1)" class="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold rounded-xl transition shadow-md shadow-sky-600/10 disabled:opacity-50 disabled:pointer-events-none">
+                ถัดไป ➡️
+            </button>
+        </div>
+
+    </main>
+
+    <div id="doctorModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white border border-sky-100 rounded-3xl p-6 max-w-sm w-full relative shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-rose-500 text-lg font-bold transition">
+                ✕
+            </button>
+
+            <div class="text-center space-y-4">
+                <img id="modalImg" src="" alt="Doctor" class="w-28 h-28 rounded-2xl object-cover mx-auto border-2 border-sky-100 shadow-sm" onerror="this.src='https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=300&h=300';">
+                <div>
+                    <h3 id="modalName" class="text-base font-black text-slate-900">...</h3>
+                    <p id="modalDept" class="text-xs text-sky-600 font-bold mt-0.5">...</p>
+                </div>
+                <div class="bg-sky-50 p-4 rounded-xl border border-sky-100/50 text-left space-y-2">
+                    <p class="text-xs text-slate-600 leading-relaxed"><span class="font-bold text-slate-800">🩺 รายละเอียดความเชี่ยวชาญ:</span> <span id="modalBio">...</span></p>
+                    <p class="text-xs text-slate-600"><span class="font-bold text-slate-800">🔑 รหัสบุคลากร:</span> <span id="modalId">...</span></p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <footer class="w-full text-center py-4 border-t border-sky-100 bg-white">
+        <p class="text-[10px] font-bold text-slate-400 tracking-wide">โรงเรียนนครพนมวิทยาคม • ทีม Z-EN CS 70</p>
+    </footer>
+
+    <script>
+        // กำหนดที่อยู่ของ Backend Server หลักของโครงการ
+        const BACKEND_URL = 'http://127.0.0.1:8000';
+        
+        let doctorData = [];       // ข้อมูลที่จะถูกนำมาสลับสับเปลี่ยนเรนเดอร์ (ตามการค้นหา)
+        let allDoctorsMaster = []; // ข้อมูลคุณหมอมาสเตอร์ก้อนหลักที่โหลดมาจาก Server
+        let currentPage = 1;
+        const itemsPerPage = 25; // โครงสร้างยึด 5x5 = 25 คนต่อหน้าตามคำสั่งเด๊ะๆ
+
+        // ฟังก์ชันโหลดข้อมูลจริงจากฐานข้อมูลหลังบ้าน
+        // 🎯 แก้ไขฟังก์ชันโหลดข้อมูลในไฟล์ doctor_info.html บรรทัดประมาณ 115 เป็นต้นไป
+// ฟังก์ชันโหลดข้อมูลจริงจากฐานข้อมูลหลังบ้าน
+        async function loadDoctorDataFromServer() {
+            // 🎯 เช็คซ้ำอีกรอบก่อนยิงหาเซิร์ฟเวอร์
+            const userId = localStorage.getItem("care_user_id");
+            if (!userId || userId === "undefined") {
+                window.location.href = "auth.html";
+                return;
+            }
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/doctors`); 
+                if (!response.ok) throw new Error("ดึงข้อมูลจากระบบขัดข้อง");
+        
+        const data = await response.json();
+        
+        allDoctorsMaster = data.map(doc => {
+            // ดึงรหัสไอดีดั้งเดิมออกมา (เช่น "doc-1", "doc-01", หรือเลข 1)
+            let rawId = doc.id || doc.doctor_id || "doc-1";
+            
+            // 🛠️ คลีนฟอร์แมตไอดีเพื่อให้ตรงกับชื่อไฟล์ภาพจริงในโฟลเดอร์หลังบ้านของคุณ (doc-1.png ถึง doc-50.png)
+            let finalImageName = rawId;
+            
+            // กรณีที่รหัสถูกส่งมาในรูปแบบ "doc-01" ให้แปลงกลับเป็น "doc-1" เพื่อให้ตรงกับไฟล์ในเครื่อง
+            if (typeof rawId === 'string' && rawId.startsWith('doc-')) {
+                const numPart = rawId.replace('doc-', ''); // สกัดเอาเฉพาะตัวเลขออกมา เช่น "01" หรือ "1"
+                const parsedNum = parseInt(numPart, 10);   // แปลงเป็นตัวเลขฐานสิบเพื่อตัดเลขศูนย์หน้าออก เช่น 1
+                if (!isNaN(parsedNum)) {
+                    finalImageName = `doc-${parsedNum}`;   // ประกอบกลับกลายเป็น "doc-1"
+                }
+            } else if (!isNaN(rawId)) {
+                // หากถูกส่งมาเป็นตัวเลขล้วนๆ เช่น 1, 2, 3 ให้เติมคำว่า doc- ข้างหน้า
+                finalImageName = `doc-${parseInt(rawId, 10)}`;
+            }
+            
+            return {
+                id: rawId, // เก็บ ID ดั้งเดิมไว้ใช้แสดงผลหรือทำส่วนอื่นๆ
+                name: doc.name || "ไม่ระบุชื่อแพทย์",
+                department: doc.department || "ทั่วไป",
+                bio: doc.bio || doc.specialty || "ไม่มีข้อมูลประวัติย่อของแพทย์ในคลังระบบ",
+                // 📸 ชี้เป้าไปยังชื่อไฟล์จริงบนหลังบ้าน เช่น http://127.0.0.1:8000/doctor_images/doc-1.png
+                image: `${BACKEND_URL}/doctor_images/${finalImageName}.png`
+            };
+        });
+
+        doctorData = [...allDoctorsMaster];
+        renderDoctors();
+    } catch (err) {
+        console.error("ระบบไม่สามารถดึงไฟล์ข้อมูลได้:", err);
+        document.getElementById("doctorGrid").innerHTML = `
+            <div class="col-span-full text-center py-12 text-rose-500 font-bold text-xs">
+                🚨 ไม่สามารถเชื่อมต่อกับฐานข้อมูลแพทย์ได้ กรุณาตรวจสอบการรัน FastAPI Backend
+            </div>`;
+    }
+}
+
+        // 🎯 ฟังก์ชันดักจับตัวอักษรและประมวลผลการค้นหาชื่อหมอแบบ Real-time
+        function handleDoctorSearch() {
+            const keyword = document.getElementById("searchDoctorInput").value.toLowerCase().trim();
+            
+            if (!keyword) {
+                // หากไม่มีการระบุคำค้นหา ให้คืนค่ารายชื่อคุณหมอทุกคนกลับมาตามระเบียบเดิม
+                doctorData = [...allDoctorsMaster];
+            } else {
+                // คัดกรองกรองค้นหาเฉพาะชื่อของคุณหมอ (Name) ที่มีคำพ้องตรงกับตัวอักษรที่พิมพ์มา
+                doctorData = allDoctorsMaster.filter(doc => 
+                    doc.name.toLowerCase().includes(keyword)
+                );
+            }
+            
+            currentPage = 1; // ดีดเบอร์หน้าเพจกลับไปหน้าเริ่มต้นที่ 1 ทุกครั้งที่มีการคัดเลือกชุดข้อมูลใหม่
+            renderDoctors();
+        }
+
+        function renderDoctors() {
+            const grid = document.getElementById("doctorGrid");
+            grid.innerHTML = "";
+
+            if (doctorData.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-12 text-slate-400 text-xs bg-white rounded-2xl border border-sky-50 shadow-2xs">📭 ไม่พบรายชื่อคุณหมอที่คุณระบุการค้นหาในระบบ</div>`;
+                document.getElementById("pageIndicator").innerText = `หน้า 1 / 1`;
+                document.getElementById("btnPrev").disabled = true;
+                document.getElementById("btnNext").disabled = true;
+                return;
+            }
+
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, doctorData.length);
+
+            for (let i = startIndex; i < endIndex; i++) {
+                const doc = doctorData[i];
+                
+                const card = document.createElement("div");
+                card.className = "doctor-card relative aspect-square rounded-2xl overflow-hidden border border-sky-100 bg-white shadow-xs cursor-pointer group transition duration-300 hover:shadow-md hover:border-sky-300";
+                card.onclick = () => openModal(doc);
+                
+                card.innerHTML = `
+                    <img src="${doc.image}" alt="${doc.name}" class="w-full h-full object-cover transition duration-500 group-hover:scale-105" onerror="this.src='https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=300&h=300';">
+                    
+                    <div class="doctor-name-overlay absolute inset-0 bg-gradient-to-t from-sky-950/90 via-sky-900/40 to-transparent flex flex-col justify-end p-3">
+                        <p class="text-white text-xs font-black tracking-tight leading-tight">${doc.name}</p>
+                        <p class="text-sky-300 text-[10px] font-bold mt-0.5">${doc.department}</p>
+                    </div>
+                `;
+                grid.appendChild(card);
+            }
+
+            const totalPages = Math.ceil(doctorData.length / itemsPerPage) || 1;
+            document.getElementById("pageIndicator").innerText = `หน้า ${currentPage} / ${totalPages}`;
+            document.getElementById("btnPrev").disabled = currentPage === 1;
+            document.getElementById("btnNext").disabled = currentPage === totalPages;
+        }
+
+        function changePage(direction) {
+            currentPage += direction;
+            renderDoctors();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 🖼️ เปิด Modal แสดงรายละเอียดแพทย์เมื่อกดดู
+        function openModal(doc) {
+            document.getElementById("modalImg").src = doc.image;
+            document.getElementById("modalName").innerText = doc.name;
+            document.getElementById("modalDept").innerText = doc.department;
+            document.getElementById("modalBio").innerText = doc.bio;
+            document.getElementById("modalId").innerText = doc.id;
+            
+            document.getElementById("doctorModal").classList.remove("hidden");
+        }
+
+        // ❌ ปิดออกด้วยปุ่มกากบาท
+        function closeModal() {
+            document.getElementById("doctorModal").classList.add("hidden");
+        }
+
+        document.addEventListener("DOMContentLoaded", loadDoctorDataFromServer);
+    </script>
+</body>
+</html>

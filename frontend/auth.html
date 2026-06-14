@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HAMOR LOGIN</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white p-8 rounded-3xl border border-slate-100 shadow-xl max-w-md w-full">
+        <div class="absolute top-4 left-4">
+        <a href="index.html" class="text-xs font-bold text-slate-400 hover:text-teal-600 transition flex items-center gap-1">
+            🏠 กลับหน้าหลัก
+        </a>
+    </div>
+        <div class="text-center mb-6">
+            <span class="text-5xl filter drop-shadow"><img src="logo.jpg" style="border-radius: 25%;"></span>
+            <h1 class="text-2xl font-black text-teal-600 mt-2">HAMOR Login</h1>
+            <p class="text-xs text-slate-400 mt-1">ระบบลงทะเบียนและเข้าตรวจสุขภาพระบบอัจฉริยะ</p>
+        </div>
+
+        <div class="flex border-b border-slate-100 mb-6 text-sm">
+            <button id="tabLogin" onclick="switchTab('login')" class="flex-1 pb-3 font-bold text-teal-600 border-b-2 border-teal-600">เข้าสู่ระบบ</button>
+            <button id="tabRegister" onclick="switchTab('register')" class="flex-1 pb-3 font-medium text-slate-400">สมัครสมาชิกใหม่</button>
+        </div>
+
+        <div class="relative rounded-2xl overflow-hidden bg-slate-950 aspect-video flex items-center justify-center border border-slate-200 shadow-inner group mb-4">
+            <div id="camPlaceholder" class="text-center p-6 text-slate-400">
+                <span class="text-4xl block mb-2">📷</span>
+                <p class="text-xs font-semibold">ปิดสัญญาณกล้องเว็บแคมอยู่</p>
+            </div>
+            <video id="webcam" autoplay playsinline class="w-full h-full object-cover hidden"></video>
+            <canvas id="capturedCanvas" class="w-full h-full object-cover hidden"></canvas>
+
+            <div id="authLoadingBox" class="absolute inset-0 bg-slate-950/80 flex flex-col items-center justify-center gap-3 text-white hidden">
+                <div class="w-10 h-10 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+                <div class="text-xs font-bold text-teal-400 tracking-wide animate-pulse">⏳ กำลังวิเคราะห์ใบหน้าด้วย Gemini AI...</div>
+                <p class="text-[10px] text-slate-400">กรุณาอย่าเพิ่งปิดหน้าต่างนี้ ระบบใช้เวลาประมวลผลสักครู่</p>
+            </div>
+        </div>
+
+        <button id="btnCapture" onclick="captureSnapshot()" class="w-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold py-2.5 rounded-xl transition mb-4 shadow-md hidden">
+            📸 กดบันทึกภาพถ่ายใบหน้ามุมตรง
+        </button>
+
+        <div id="loginForm" class="space-y-3">
+            <input type="text" id="loginUser" placeholder="ชื่อผู้ใช้งาน (Username)" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-teal-500 focus:outline-none">
+            <input type="password" id="loginPass" placeholder="รหัสผ่านเข้าใช้งาน" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-teal-500 focus:outline-none">
+            
+            <div class="flex gap-2 pt-2">
+                <button onclick="submitPasswordLogin()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold py-3 rounded-xl transition">เข้าด้วยรหัสผ่าน</button>
+                <button onclick="startWebcam()" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-3 rounded-xl transition shadow-sm flex items-center justify-center gap-1">
+                    <span>⚡</span> สแกนใบหน้าเข้าสู่ระบบ
+                </button>
+            </div>
+        </div>
+
+        <div id="registerForm" class="space-y-3 hidden">
+            <input type="text" id="regUser" placeholder="ตั้งชื่อผู้ใช้งาน (Username)" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-teal-500 focus:outline-none">
+            <input type="text" id="regName" placeholder="ชื่อ-นามสกุลจริงของคุณ" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-teal-500 focus:outline-none">
+            <input type="password" id="regPass" placeholder="ตั้งรหัสผ่านความปลอดภัย" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-teal-500 focus:outline-none">
+            
+            <div class="flex gap-2 pt-2">
+                <button onclick="startWebcam()" class="flex-1 border border-teal-500 text-teal-600 hover:bg-teal-50 text-xs font-bold py-3 rounded-xl transition flex items-center justify-center gap-1">
+                    <span>👤</span> เปิดกล้องสแกนใบหน้า
+                </button>
+                <button onclick="submitRegister()" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-3 rounded-xl transition shadow-sm">
+                    ลงทะเบียนคนไข้ใหม่
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="js/auth.js"></script>
+</body>
+</html>

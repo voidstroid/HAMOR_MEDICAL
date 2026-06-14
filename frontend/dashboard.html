@@ -1,0 +1,234 @@
+    <!DOCTYPE html>
+    <html lang="th">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>🏥 Patients Portal</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        <style>
+            body { font-family: 'Sarabun', sans-serif; }
+        </style>
+    </head>
+    <body class="bg-slate-50 text-slate-800 min-h-screen">
+
+        <nav class="bg-white border-b border-slate-100 px-6 py-4 sticky top-0 z-50 shadow-xs">
+            <div class="max-w-6xl mx-auto flex justify-between items-center">
+                <div class="text-xl font-black text-teal-600 tracking-tight">HAMOR Patient Portal</div>
+                <div class="flex items-center gap-3">
+                    <span id="displayPatientName" class="text-xs font-bold text-slate-600">คนไข้: โหลดข้อมูล...</span>
+                    <a href="doctor_info.html" class="text-[11px] bg-teal-50 hover:bg-teal-100 text-teal-600 font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1">🔍 ค้นหาแพทย์</a>
+                    <button onclick="logout()" class="text-[11px] bg-rose-50 text-rose-600 px-3 py-1.5 rounded-lg font-bold hover:bg-rose-100 transition-colors">ออกจากระบบ</button>
+                </div>
+            </div>
+        </nav>
+
+        <main class="max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <div class="lg:col-span-1 space-y-6">
+                
+                <div class="bg-slate-900 text-white p-6 rounded-3xl shadow-md">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-teal-400">ภาพรวมสถิติสุขภาพของคุณ</h3>
+                    <div class="grid grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <p class="text-[10px] text-slate-400">ประวัตินัดหมายรวม</p>
+                            <p id="kpiTotal" class="text-2xl font-black text-white">0 ครั้ง</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-slate-400">เข้าตรวจสำเร็จ</p>
+                            <p id="kpiMet" class="text-2xl font-black text-emerald-400">0 ครั้ง</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-slate-400">หลุดการนัดตรวจ</p>
+                            <p id="kpiNoShow" class="text-2xl font-black text-rose-400">0 ครั้ง</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-slate-400">คุณหมอที่เคยพบ</p>
+                            <p id="kpiDoc" class="text-2xl font-black text-sky-400">0 ท่าน</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                    <h3 class="text-base font-bold text-slate-900 mb-1">🤖 ตรวจคัดกรองโรคอัตโนมัติด้วย AI</h3>
+                    <p class="text-xs text-slate-400 mb-4">พิมพ์ระบุอาการของคุณเพื่อให้ Gemini AI คาดคะเนกลุ่มโรค พร้อมจัดหาคิวแพทย์ผู้เชี่ยวชาญเฉพาะทางให้ทันทีแบบเรียบร้อย</p>
+                    
+                    <div class="space-y-3">
+                        <textarea id="symptomInput" placeholder="ตัวอย่าง: มีอาการปวดท้องจุกแน่นลิ้นปี่รุนแรงหลังรับประทานอาหาร คลื่นไส้ร่วมด้วย" class="w-full h-24 p-3 border border-slate-200 rounded-xl text-xs focus:border-teal-500 focus:outline-none leading-relaxed"></textarea>
+                        <button onclick="diagnoseDisease(event)" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs py-3 rounded-xl transition shadow-xs">ส่งคำขอให้ AI ประมวลผลและนัดแพทย์</button>
+                    </div>
+                </div>
+
+                <div id="diagResultCard" class="bg-gradient-to-br from-teal-50 to-sky-50 border border-teal-100 p-5 rounded-3xl hidden">
+                    <span class="text-[9px] uppercase font-bold tracking-wider bg-teal-200/50 text-teal-800 px-2 py-0.5 rounded">สรุปแผนเวชระเบียนจาก AI</span>
+                    <h4 class="font-black text-slate-900 text-base mt-2" id="resDisease">โรค: -</h4>
+                    <p class="text-xs text-slate-600 mt-1 leading-relaxed" id="resReason">-</p>
+                    
+                    <div class="mt-4 pt-4 border-t border-teal-200/60 text-xs space-y-1.5">
+                        <p class="text-slate-700">🏥 <span class="font-bold">นัดหมายแพทย์:</span> <span id="resDocName">-</span></p>
+                        <p class="text-slate-500">📍 <span class="font-bold">สังกัด:</span> แผนก <span id="resDept">-</span> (<span id="resHosp">-</span>)</p>
+                        <p class="text-teal-700 font-semibold">📅 <span class="font-bold">ตารางนัดตรวจ (บันทึกเข้าระบบแล้ว):</span> <span id="resDate">-</span></p>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="lg:col-span-2 space-y-6">
+                
+                <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                    <h3 class="font-bold text-sm text-slate-900 mb-3">👨‍⚕️ ทำเนียบรายชื่อแพทย์ที่คุณเคยเข้ารักษาสำเร็จ</h3>
+                    <div id="doctorsMetContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="text-slate-400 text-xs py-2">กำลังดึงข้อมูลประวัติคุณหมอ...</div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                    <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                        <div>
+                            <h3 class="font-bold text-sm text-slate-900">📋 แฟ้มรายงานบันทึกประวัตินัดตรวจสุขภาพของคุณ</h3>
+                            <p class="text-[11px] text-slate-400">ค้นหาประวัติย้อนหลังหรือกรองเฉพาะสถานะนัดหมาย</p>
+                        </div>
+                        
+                        <div class="flex gap-2">
+                            <input type="text" id="tableSearch" placeholder="ค้นตามชื่อหมอ/อาการ..." class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-teal-500 w-full sm:w-40">
+                            <select id="statusFilter" class="px-2 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none text-slate-600">
+                                <option value="ALL">ทุกสถานะ</option>
+                                <option value="CONFIRMED">CONFIRMED</option>
+                                <option value="PENDING">PENDING</option>
+                                <option value="CANCELLED">CANCELLED</option>
+                                <option value="NO_SHOW">NO_SHOW</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-100 text-slate-500 font-bold uppercase tracking-wider">
+                                    <th class="p-4">รหัสคิว</th>
+                                    <th class="p-4">วันเวลานัดตรวจ</th>
+                                    <th class="p-4">แพทย์ผู้รับผิดชอบ</th>
+                                    <th class="p-4">อาการที่แจ้ง</th>
+                                    <th class="p-4 text-center">สถานะ & การควบคุม</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody" class="divide-y divide-slate-100 text-slate-600">
+                                <tr><td colspan="5" class="p-4 text-center text-slate-400">กำลังดึงข้อมูลเวชระเบียนคิวสุขภาพในฐานข้อมูล...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+<div class="mt-6 bg-white border border-slate-100 rounded-3xl shadow-xl overflow-hidden max-w-xl mx-auto flex flex-col h-80 text-slate-800">
+    <div class="bg-teal-600 p-4 flex justify-between items-center text-white">
+        <div class="flex items-center gap-2">
+            <span class="text-lg">💬</span>
+            <div>
+                <h3 class="font-bold text-xs sm:text-sm">ระบบปรึกษาแพทย์ออนไลน์ (Telemedicine)</h3>
+                <p class="text-[10px] text-teal-100">ศูนย์ประสานงานแพทย์คัดกรองโรคผ่านคลาวด์</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-1.5 text-[11px] bg-teal-700/50 px-2 py-0.5 rounded-full text-white">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>Server Live</span>
+        </div>
+    </div>
+    <div id="srvPatientChatLogs" class="flex-1 p-4 overflow-y-auto space-y-2.5 text-xs bg-slate-50">
+        <div class="text-slate-400 italic text-center py-4">กำลังโหลดประวัติจากเซิร์ฟเวอร์หลังบ้าน...</div>
+    </div>
+    <div class="p-3 bg-white border-t border-slate-100 flex gap-2">
+        <input type="text" id="srvPatientMsgInput" onkeydown="if(event.key==='Enter') sendPatientMessageToServer()" placeholder="พิมพ์ข้อความปรึกษาคุณหมอตรงนี้..." class="flex-1 bg-slate-50 border border-slate-200 text-xs px-4 py-2.5 rounded-xl text-slate-800 focus:outline-none focus:border-teal-500">
+        <button onclick="sendPatientMessageToServer()" class="bg-teal-600 hover:bg-teal-700 px-4 text-xs font-bold rounded-xl text-white transition">ส่ง</button>
+    </div>
+</div>
+        </main>
+
+    <script src="js/dashboard.js"></script>
+    <script>
+// ดึงไอดีจากระบบเดิม ถ้าไม่มีให้ Force เป็นไอดี 'u001' ตามสิทธิ์ที่พบในเซิร์ฟเวอร์หลักของคุณ
+    const srvPatientId = localStorage.getItem("care_user_id") || "u001";
+    const srvPatientName = localStorage.getItem("care_user_name") || "นายสมชาย ใจดี";
+    const BASE_TELE_URL = "http://127.0.0.1:8000/api/telehealth";
+
+    async function fetchPatientChatHistory() {
+        try {
+            const response = await fetch(`${BASE_TELE_URL}/history?patient_id=${srvPatientId}`);
+            if (!response.ok) return;
+            const chats = await response.json();
+            const logBox = document.getElementById("srvPatientChatLogs");
+            if (chats.length === 0) {
+                logBox.innerHTML = `<div class="text-slate-400 italic text-center py-4">👋 ยินดีต้อนรับครับ พิมพ์ข้อความด้านล่างเพื่อเริ่มเปิดห้องสนทนากับคุณหมอ</div>`;
+                return;
+            }
+            logBox.innerHTML = "";
+            chats.forEach(chat => {
+                if (chat.sender === 'PATIENT') {
+                    logBox.innerHTML += `<div class="bg-teal-50 text-teal-800 p-3 rounded-2xl max-w-[85%] ml-auto text-right border border-teal-100 leading-relaxed"><b></b> ${chat.text}</div>`;
+                } else {
+                    logBox.innerHTML += `<div class="bg-white text-slate-700 p-3 rounded-2xl max-w-[85%] border border-slate-100 leading-relaxed"><b>👨‍⚕️ ${chat.name}:</b> ${chat.text}</div>`;
+                }
+            });
+            logBox.scrollTop = logBox.scrollHeight;
+        } catch (err) { console.error("พอร์ตคนไข้หลุดการเชื่อมต่อหลังบ้าน", err); }
+    }
+
+    async function sendPatientMessageToServer() {
+        const input = document.getElementById("srvPatientMsgInput");
+        const msgText = input.value.trim();
+        if (!msgText) return;
+        try {
+            await fetch(`${BASE_TELE_URL}/send`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ patient_id: srvPatientId, patient_name: srvPatientName, sender: 'PATIENT', name: srvPatientName, text: msgText })
+            });
+            input.value = "";
+            fetchPatientChatHistory();
+        } catch (err) { alert("🚨 ระบบส่งข้อมูลขัดข้อง โปรดเช็ค CORS"); }
+    }
+
+    fetchPatientChatHistory();
+    setInterval(fetchPatientChatHistory, 3000);
+</script>
+<script>
+    // ตรวจสอบตัวแปรไอดีคนไข้ปัจจุบัน (ดึงจากระบบ Login ของคุณ)
+    const currentPatientId = localStorage.getItem("care_user_id") || "u001";
+    const STATUS_API_URL = "http://127.0.0.1:8000/api/telehealth/update-status";
+
+    // ✨ ฟังก์ชันแจ้งเซิร์ฟเวอร์ว่า "ฉันเปิดแท็บ/เข้าเว็บมาแล้วนะ" (Online)
+    async function reportOnlineStatus() {
+        if (!currentPatientId) return;
+        try {
+            await fetch(STATUS_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ patient_id: currentPatientId, is_online: true })
+            });
+            console.log(`📡 [Live] ส่งสถานะ Online สำหรับคนไข้ ${currentPatientId}`);
+        } catch (err) { console.error("อัปเดตสถานะออนไลน์ขัดข้อง", err); }
+    }
+
+    // 🎯 ดักจับ: ตอนสลับแท็บไปมา (ถ้าสลับกลับมามองเห็นหน้าจอ ให้ Online ทันที)
+    document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'hidden') {
+            const data = JSON.stringify({ patient_id: currentPatientId, is_online: false });
+            const blob = new Blob([data], { type: 'application/json' });
+            navigator.sendBeacon(STATUS_API_URL, blob); // สลับแท็บหนี/พับหน้าจอ = Offline
+        } else if (document.visibilityState === 'visible') {
+            reportOnlineStatus(); // ✨ สลับกลับมาเปิดแท็บนี้ใหม่ = Online ทันที!
+        }
+    });
+
+    // 🎯 ดักจับ: ตอนปิดแท็บ หรือ ปิดเบราว์เซอร์ไปเลย (Offline)
+    window.addEventListener('pagehide', function() {
+        const data = JSON.stringify({ patient_id: currentPatientId, is_online: false });
+        const blob = new Blob([data], { type: 'application/json' });
+        navigator.sendBeacon(STATUS_API_URL, blob);
+    });
+
+    // 🚀 สั่งให้รันทันทีตั้งแต่ "วินาทีแรกที่เปิดแท็บขึ้นมาใหม่"
+    reportOnlineStatus();
+</script>
+</body>
+</html>
