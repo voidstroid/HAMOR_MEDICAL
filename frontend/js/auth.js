@@ -162,7 +162,7 @@ async function submitRegister() {
 
     try {
         toggleCamSpinner(true, "👤 กำลังบันทึกเวชระเบียน...");
-        const res = await fetch('http://127.0.0.1:8000/api/patient/register', { 
+        const res = await fetch('/api/patient/register', { 
             method: 'POST', 
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -195,7 +195,7 @@ async function submitPasswordLogin() {
 
     try {
         toggleCamSpinner(true, "🔑 กำลังยืนยันรหัสผ่าน...");
-        const response = await fetch('http://127.0.0.1:8000/api/auth/login-password', {
+        const response = await fetch('/api/auth/login-password', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -242,7 +242,7 @@ async function processFaceLogin() {
         // รักษาเอฟเฟกต์ตัวหมุนและปรับข้อความให้ชัดเจน
         toggleCamSpinner(true, "🔮 AI กำลังวิเคราะห์อัตลักษณ์ใบหน้า...");
 
-        const response = await fetch('http://127.0.0.1:8000/api/auth/login-face', {
+        const response = await fetch('/api/auth/login-face', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
