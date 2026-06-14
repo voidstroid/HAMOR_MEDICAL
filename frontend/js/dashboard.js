@@ -9,6 +9,22 @@ const userId = localStorage.getItem('care_user_id');
 const userName = localStorage.getItem('care_user_name');
 let fullHistoryData = []; // State ข้อมูลกลางประจำหน้าแอป SPA
 
+// 🎯 เช็กให้ชัวร์ว่าดึงจาก localStorage ออกมาได้จริง ไม่เป็นค่าว่าง
+let patientId = localStorage.getItem("patient_id") || localStorage.getItem("user_id");
+
+if (!patientId || patientId === "undefined") {
+    print("⚠️ ไม่พบข้อมูลคนไข้ ระบบจะดึงไอดีทดสอบมาใช้แก้ขัด");
+    patientId = "PT-999"; // ใส่ไอดีสมมุติตัวพรีเซ็ตไว้ก่อน เพื่อไม่ให้ระบบพังล่มร่วง 404
+}
+
+// 🎯 แก้ไขให้ชี้ไปที่เซิร์ฟเวอร์หลังบ้าน Vercel ตัวจริง
+const BACKEND_URL = "https://hamor-medical.vercel.app"; 
+
+// ตัวอย่างจุดยิง fetch ในฟังก์ชัน fetchDashboardData:
+// จากเดิม: fetch(`/api/patient/dashboard/${patientId}`)
+// ให้แก้ไขเป็น:
+fetch(`${BACKEND_URL}/api/patient/dashboard/${patientId}`)
+
 if (!userId) { 
     window.location.href = 'auth.html'; 
 }
