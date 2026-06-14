@@ -35,21 +35,27 @@ origins = [
 ]
 
 # 2. ตั้งค่าการเคลียร์ปลดล็อกสิทธิ์ให้เข้าถึงได้จากภายนอก
+
+# ปลดล็อก CORS ด่านที่ 1 (FastAPI Level)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # 🌟 บังคับเปิดอิสระชั่วคราวเพื่อให้ GitHub Pages ดึงข้อมูลได้แน่นอน
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False, # ต้องเป็น False หากใช้ originsเป็น "*"
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+@app.post("/api/auth/login-face")
+async def login_face_api(payload: dict): # รีเซ็ตรับค่า payload ดูก่อน
+    return {
+        "success": True,
+        "name": "ทดสอบผ่านระบบ Cloud Vercel"
+    }
+
+# 🎯 ปรับปรุงเพิ่ม: ดักจับคำสั่ง Preflight (OPTIONS) เคลียร์ทางให้หน้าบ้านยิงผ่านฉลุย
+@app.options("/{rest_of_path:path}")
+async def preflight_handler(rest_of_path: str):
+    return {"message": "OK"}
 
 # 🔍 ปรับแก้บรรทัดพาร์ทเริ่มต้นใน main.py (หรือ api/index.py) ของคุณ:
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # เติม dirname ครอบอีกชั้นเพื่อถอยออกจากโฟลเดอร์ api
