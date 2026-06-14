@@ -1,0 +1,22 @@
+[
+    {
+        "patient_id": "u001",
+        "patient_name": "คนไข้ (u001)",
+        "is_online": false
+    },
+    {
+        "patient_id": "u002",
+        "patient_name": "คนไข้ (u002)",
+        "is_online": false
+    },
+    {
+        "patient_id": "undefined",
+        "patient_name": "ผู้ป่วยรหัส undefined",
+        "is_online": false
+    },
+    {
+        "patient_id": "u003",
+        "patient_name": "asfsadfsafsa",
+        "is_online": false
+    }
+]
