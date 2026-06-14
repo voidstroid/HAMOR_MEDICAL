@@ -108,7 +108,7 @@
 
     <script>
         // กำหนดที่อยู่ของ Backend Server หลักของโครงการ
-        const BACKEND_URL = 'http://127.0.0.1:8000';
+        const BACKEND_URL = 'https://hamor-medical.vercel.app';
         
         let doctorData = [];       // ข้อมูลที่จะถูกนำมาสลับสับเปลี่ยนเรนเดอร์ (ตามการค้นหา)
         let allDoctorsMaster = []; // ข้อมูลคุณหมอมาสเตอร์ก้อนหลักที่โหลดมาจาก Server
@@ -156,7 +156,7 @@
                 name: doc.name || "ไม่ระบุชื่อแพทย์",
                 department: doc.department || "ทั่วไป",
                 bio: doc.bio || doc.specialty || "ไม่มีข้อมูลประวัติย่อของแพทย์ในคลังระบบ",
-                // 📸 ชี้เป้าไปยังชื่อไฟล์จริงบนหลังบ้าน เช่น http://127.0.0.1:8000/doctor_images/doc-1.png
+                // 📸 ชี้เป้าไปยังชื่อไฟล์จริงบนหลังบ้าน เช่น /doctor_images/doc-1.png
                 image: `${BACKEND_URL}/doctor_images/${finalImageName}.png`
             };
         });
