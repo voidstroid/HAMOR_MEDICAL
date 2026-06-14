@@ -9,6 +9,43 @@ let base64ImageString = null;
 // 🎯 ปรับปรุงจุดที่ 1: กำหนดที่อยู่เซิร์ฟเวอร์ Vercel หลังบ้านให้ชัดเจนถาวร
 const BACKEND_URL = "https://hamor-medical.vercel.app";
 
+// โค้ดตอนที่กดสแกนใบหน้าและส่งข้อมูลไปหลังบ้าน
+function sendFaceToBackend(inputUsername, base64Image) {
+    // แสดงสถานะว่ากำลังประมวลผล
+    console.log("🤖 กำลังส่งภาพไปวิเคราะห์ที่หลังบ้าน...");
+    
+    fetch(`${BACKEND_URL}/api/auth/login-face`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            username: inputUsername,
+            image: base64Image
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        // 🚨 เช็กเงื่อนไขความปลอดภัยอย่างเข้มงวด
+        if (data && data.success === true) {
+            alert(`🎉 ยินดีต้อนรับคุณ ${data.name} เข้าสู่ระบบสำเร็จ!`);
+            
+            // บันทึกไอดีจริงลงเครื่อง เพื่อให้หน้าแดชบอร์ดไม่เป็น undefined
+            localStorage.setItem("patient_id", data.user_id); 
+            
+            // ย้ายหน้าเมื่อสแกนผ่านจริงเท่านั้น
+            window.location.href = "dashboard.html"; 
+        } else {
+            // ❌ ถ้าหลังบ้านบอกว่าพัง หรือสแกนไม่ติด ให้แจ้งเตือนและล็อกหน้าไว้
+            alert(`🛑 สแกนใบหน้าล้มเหลว: ${data.detail || "โปรดลองใหม่อีกครั้ง"}`);
+        }
+    })
+    .catch(err => {
+        console.error("Error:", err);
+        alert("🔌 เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์หลังบ้าน");
+    });
+}
+
 // ดึง Elements ที่ต้องใช้งานร่วมกันจากหน้าเว็บ (auth.html)
 const video = document.getElementById('webcam');
 const canvas = document.getElementById('capturedCanvas');
