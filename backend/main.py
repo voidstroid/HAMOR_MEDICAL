@@ -25,7 +25,7 @@ if GEMINI_API_KEY:
     except Exception as e:
         print(f"⚠️ [HAMOR AI] ไม่สามารถเปิดใช้งาน Gemini SDK ได้: {e}")
 
-app = FastAPI(title="HAMOR Total Unified API")
+app = FastAPI()
 
 # 1. ระบุชื่อโดเมนหน้าบ้านของคุณให้ชัดเจน (หรือใส่ "*" เพื่อเปิดรับทั้งหมด)
 origins = [
@@ -35,48 +35,31 @@ origins = [
 ]
 
 # 2. ตั้งค่าการเคลียร์ปลดล็อกสิทธิ์ให้เข้าถึงได้จากภายนอก
-
-# ปลดล็อก CORS ด่านที่ 1 (FastAPI Level)
+# ปลดล็อก CORS ระดับซอฟต์แวร์ควบคู่กัน
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=False, # ต้องเป็น False หากใช้ originsเป็น "*"
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# 🎯 2. เพิ่มสคริปต์นี้เข้าไป: ดักจับและบังคับตอบกลับ 200 OK ทันทีหากหน้าบ้านยิง OPTIONS เข้ามา เช็กก่อนเข้าถึงฟังก์ชันหลัก
-@app.middleware("http")
-async def cors_preflight_middleware(request: Request, call_next):
-    # ถ้าหน้าบ้านส่งคำสั่งเช็กประตู (OPTIONS) เข้ามา
-    if request.method == "OPTIONS":
-        response = Response(status_code=200)
-        response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
-        return response
-    
-    # ถ้าเป็นคำสั่งปกติ (เช่น POST ภาพสแกนใบหน้า) ให้ปล่อยไหลไปทำงานตามปกติ
-    response = await call_next(request)
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    return response
+class FaceLoginPayload(BaseModel):
+    username: str
+    image: str
 
+# 🎯 ระบบ Zero-Config ของ Vercel จะแมปพาร์ทจากชื่อโฟลเดอร์ให้อัตโนมัติเป็น /api/...
 @app.post("/api/auth/login-face")
-async def login_face_api(payload: dict): # รีเซ็ตรับค่า payload ดูก่อน
+async def login_face_api(payload: FaceLoginPayload):
     return {
         "success": True,
-        "name": "ทดสอบผ่านระบบ Cloud Vercel"
+        "name": "ยินดีต้อนรับ! ปลดล็อกระบบ Python สำเร็จแล้ว",
+        "user_id": "PT-999"
     }
 
-# 🎯 ปรับปรุงเพิ่ม: ดักจับคำสั่ง Preflight (OPTIONS) เคลียร์ทางให้หน้าบ้านยิงผ่านฉลุย
-@app.options("/{rest_of_path:path}")
-async def preflight_handler(rest_of_path: str):
-    return {"message": "OK"}
-
-# 🎯 ฟังก์ชันแถม: เอาไว้เปิดเช็กหน้าเว็บหลักเพื่อแก้บั๊ก 404
-@app.get("/")
+@app.get("/api")
 async def root():
-    return {"status": "online", "backend": "Python FastAPI"}
+    return {"status": "online", "engine": "FastAPI on Vercel Zero-Config"}
 
 # 🔍 ปรับแก้บรรทัดพาร์ทเริ่มต้นใน main.py (หรือ api/index.py) ของคุณ:
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # เติม dirname ครอบอีกชั้นเพื่อถอยออกจากโฟลเดอร์ api
