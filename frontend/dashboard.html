@@ -149,7 +149,7 @@
 // ดึงไอดีจากระบบเดิม ถ้าไม่มีให้ Force เป็นไอดี 'u001' ตามสิทธิ์ที่พบในเซิร์ฟเวอร์หลักของคุณ
     const srvPatientId = localStorage.getItem("care_user_id") || "u001";
     const srvPatientName = localStorage.getItem("care_user_name") || "นายสมชาย ใจดี";
-    const BASE_TELE_URL = "http://127.0.0.1:8000/api/telehealth";
+    const BASE_TELE_URL = "/api/telehealth";
 
     async function fetchPatientChatHistory() {
         try {
@@ -194,7 +194,7 @@
 <script>
     // ตรวจสอบตัวแปรไอดีคนไข้ปัจจุบัน (ดึงจากระบบ Login ของคุณ)
     const currentPatientId = localStorage.getItem("care_user_id") || "u001";
-    const STATUS_API_URL = "http://127.0.0.1:8000/api/telehealth/update-status";
+    const STATUS_API_URL = "/api/telehealth/update-status";
 
     // ✨ ฟังก์ชันแจ้งเซิร์ฟเวอร์ว่า "ฉันเปิดแท็บ/เข้าเว็บมาแล้วนะ" (Online)
     async function reportOnlineStatus() {
