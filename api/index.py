@@ -37,11 +37,23 @@ ALLOWED_ORIGINS = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS + ["*"],
-    allow_credentials=True,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.options("/api/{rest_of_path:path}")
+async def options_api(rest_of_path: str, request: Request):
+    origin = request.headers.get("origin")
+    response = Response(status_code=204)
+    response.headers["Access-Control-Allow-Origin"] = origin or "https://voidstroid.github.io"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
+    response.headers["Access-Control-Max-Age"] = "86400"
+    response.headers["Vary"] = "Origin"
+    return response
+
 
 @app.middleware("http")
 async def add_cors_headers(request: Request, call_next):
