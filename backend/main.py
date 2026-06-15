@@ -420,7 +420,7 @@ async def login_with_face_only(payload: FaceLoginRequest):
         valid_patients = [p for p in patients if p.get("user_id")]
         
         # โฟลเดอร์ที่เก็บรูปภาพใบหน้าของคนไข้จริงในเครื่องคอมพิวเตอร์ของคุณ
-        FACES_DIR = r"D:\VScode\medical_project\backend\patient_faces"
+        FACES_DIR = FACE_DIR
         
         # 📦 เตรียมรายการวัตถุ (Contents) เพื่อส่งให้ Gemini ประมวลผลร่วมกัน
         ai_contents = []
@@ -557,44 +557,6 @@ async def get_active_chat_patients():
     sessions.sort(key=lambda x: (-1 if x.get("is_online") else 0, x.get("patient_id", "")))
     return sessions
 
-@app.get("/api/doctor/appointments/{doctor_id}")
-async def get_doctor_appointments(doctor_id: str):
-    appointments = load_json("appointments.json")
-    patients = load_json("patients.json")
-    doc_apts = [a for a in appointments if a.get("doctor_id") == doctor_id]
-    
-    enriched_records = []
-    for apt in doc_apts:
-        patient = next((p for p in patients if p.get("user_id") == apt.get("user_id")), None)
-        patient_name = patient["name"] if patient else "ผู้ป่วย CareSync User"
-        
-        # 👤 1. ดึงข้อมูลรูปภาพใบหน้าคนไข้
-        raw_face = patient.get("face_image") if patient else ""
-        
-        # 🎨 2. สร้างภาพอวาตาร์สำรองทันที (Fallback UI-Avatar ตามชื่อคนไข้) 
-        # เพื่อป้องกันปัญหาหน้าจอแตกกรณีค่ารูปเป็นค่าว่าง หรือส่งค่าผิดพลาด
-        encoded_name = patient_name.replace(" ", "+")
-        patient_image_url = f"https://ui-avatars.com/api/?name={encoded_name}&background=0f766e&color=fff&bold=true"
-        
-        # ตรวจสอบรูปแบบข้อมูลรูปภาพในฐานข้อมูล
-        if raw_face and (raw_face.startswith("data:image") or len(raw_face) > 100):
-            patient_image_url = raw_face
-        elif raw_face and raw_face.endswith(('.png', '.jpg', '.jpeg')):
-            patient_image_url = f"/patient_faces/{raw_face}"
-        elif raw_face and raw_face.startswith("http"):
-            patient_image_url = raw_face
-
-        enriched_records.append({
-            "apt_id": apt.get("apt_id"),
-            "user_id": apt.get("user_id"),
-            "patient_name": patient_name,
-            "date": apt.get("date"),
-            "symptom": apt.get("symptom"),
-            "status": apt.get("status"),
-            "patient_image": patient_image_url  # 🚀 การันตีว่าส่งค่า String URL ที่ใช้งานได้จริงเสมอ
-        })
-    return {"appointments": enriched_records}
-
 # 👤 1. API เส้นทางรับลงทะเบียนข้อมูลคนไข้ใหม่ (แก้ไขปัญหา 404 Not Found)
 @app.post("/api/patient/register")
 async def register_patient(payload: PatientRegisterRequest):
@@ -663,16 +625,12 @@ async def register_patient(payload: PatientRegisterRequest):
     
     # บันทึกข้อมูลทั้งหมดกลับลงไปที่ไฟล์ JSON หลัก
     try:
-        with open("patients.json", "w", encoding="utf-8") as f:
-            json.dump(patients, f, indent=4, ensure_ascii=False)
-    except Exception:
-        raise HTTPException(status_code=500, detail="ไม่สามารถเขียนข้อมูลลงฐานข้อมูลระบบได้")
+        save_json("patients.json", patients)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"ไม่สามารถเขียนข้อมูลลงฐานข้อมูลระบบได้: {exc}")
 
     # 5. ลงทะเบียนเซสชันแชต Telehealth สำรองไว้ให้คนไข้ใหม่ทันที (ตามคอมเมนต์ในโค้ดเดิมของคุณ)
-    try:
-        sessions = load_json("telehealth_session.json")
-    except Exception:
-        sessions = []
+    sessions = load_sessions()
         
     sessions.append({
         "patient_id": new_user_id,
@@ -680,11 +638,7 @@ async def register_patient(payload: PatientRegisterRequest):
         "is_online": False
     })
     
-    try:
-        with open("telehealth_session.json", "w", encoding="utf-8") as f:
-            json.dump(sessions, f, indent=4, ensure_ascii=False)
-    except Exception:
-        pass
+    save_sessions(sessions)
 
     # ส่งผลลัพธ์กลับไปแจ้งฝั่งหน้าบ้าน
     return {
