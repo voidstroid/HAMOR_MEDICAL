@@ -27,37 +27,44 @@ if GEMINI_API_KEY:
 
 app = FastAPI(title="HAMOR Total Unified API")
 
-# 1. ระบุชื่อโดเมนหน้าบ้านของคุณให้ชัดเจน (หรือใส่ "*" เพื่อเปิดรับทั้งหมด)
-origins = [
-    "https://voidstroid.github.io",
-    "http://localhost:5500",  # สำหรับเวลาคุณเปิดทดสอบในเครื่องตัวเอง (Live Server)
-    "http://127.0.0.1:5500",
-]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# 2. ตั้งค่าการเคลียร์ปลดล็อกสิทธิ์ให้เข้าถึงได้จากภายนอก
+# ใช้พาธของโปรเจกต์ปัจจุบันแทนค่าคงที่บนเครื่อง (หลีกเลี่ยง D:\)
+BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_DIR = os.path.dirname(BACKEND_DIR)
+DB_DOC_IMG_DIR = os.path.join(PROJECT_DIR, "doctor_images")
+FACE_DIR = os.path.join(BACKEND_DIR, "patient_faces")
 
-# 🔍 ปรับแก้บรรทัดพาร์ทเริ่มต้นใน main.py (หรือ api/index.py) ของคุณ:
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # เติม dirname ครอบอีกชั้นเพื่อถอยออกจากโฟลเดอร์ api
+os.makedirs(DB_DOC_IMG_DIR, exist_ok=True)
+os.makedirs(FACE_DIR, exist_ok=True)
 
-# พาร์ทคลังรูปหมอ และไฟล์ json จะชี้ออกมาด้านนอกได้ถูกต้องแม่นยำ
-DB_DOC_IMG_DIR = os.path.join(BASE_DIR, "doctor_images")
-if not os.path.exists(DB_DOC_IMG_DIR):
-    os.makedirs(DB_DOC_IMG_DIR)
 
-FACE_DIR = r"D:\VScode\medical_project\backend\patient_faces"
+def data_path(filename: str) -> str:
+    return os.path.join(BACKEND_DIR, filename)
 
-if not os.path.exists(FACE_DIR):
-    os.makedirs(FACE_DIR, exist_ok=True)
 
-# ฟังก์ชันช่วยจัดการไฟล์ JSON
+# ฟังก์ชันช่วยจัดการไฟล์ JSON แบบพาธปลอดภัย
 def load_json(filename: str) -> list:
-    if not os.path.exists(filename): return []
+    path = data_path(filename)
+    if not os.path.exists(path):
+        return []
     try:
-        with open(filename, 'r', encoding='utf-8') as f: return json.load(f)
-    except: return []
+        with open(path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return []
+
 
 def save_json(filename: str, data: list):
-    with open(filename, 'w', encoding='utf-8') as f:
+    path = data_path(filename)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 # โครงสร้างสำหรับรับส่งข้อมูล
@@ -74,6 +81,7 @@ class PatientLoginRequest(BaseModel):
     password: str
 
 class FaceLoginRequest(BaseModel):
+    username: Optional[str] = ""
     image: str  # รับค่า Base64 สตริงจากกล้องหน้าเว็บ
 
 class DoctorLoginRequest(BaseModel):
@@ -505,13 +513,20 @@ async def login_with_face_only(payload: FaceLoginRequest):
 
 
 def load_sessions() -> list:
-    if not os.path.exists(SESSION_FILE): return []
+    path = data_path("telehealth_session.json")
+    if not os.path.exists(path):
+        return []
     try:
-        with open(SESSION_FILE, "r", encoding="utf-8") as f: return json.load(f)
-    except: return []
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return []
+
 
 def save_sessions(sessions: list):
-    with open(SESSION_FILE, "w", encoding="utf-8") as f: json.dump(sessions, f, indent=4, ensure_ascii=False)
+    path = data_path("telehealth_session.json")
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(sessions, f, indent=4, ensure_ascii=False)
 
 @app.post("/api/telehealth/update-status")
 async def update_telehealth_status(payload: StatusUpdatePayload):
@@ -580,53 +595,6 @@ async def get_doctor_appointments(doctor_id: str):
         })
     return {"appointments": enriched_records}
 
-# -----------------------------------------------------------------
-# 🚀 อัปเดตร่วมกับ Endpoint สมัครสมาชิกเดิมของคุณ (ตัวอย่างโครงสร้างไอดีใหม่)
-# -----------------------------------------------------------------
-# สมมติว่าในฟังก์ชัน @app.post("/api/patient/register") เดิมของคุณทำงานเสร็จสิ้น
-# ให้แทรกคำสั่งเรียกฟังก์ชัน register_new_patient_to_telehealth ด้านบนเข้าไป เช่น:
-#
-# @app.post("/api/patient/register")
-# async def register_patient(payload: dict):
-#     ... โค้ดสมัครสมาชิกเดิมของคุณ ...
-#     new_id = f"u{len(total_patients):03d}" # หรือ u002, u003 ตามกลไกเดิมของคุณ
-#     
-#     # สั่งซิงค์เข้าคลังแชททันทีที่มีการสมัครใหม่สำเร็จ:
-#     register_new_patient_to_telehealth(new_id, payload.get("name"))
-#     return {"success": True, "patient_id": new_id}
-
-
-# -----------------------------------------------------------------
-# API เส้นทางรับส่งและจัดเรียงข้อมูลตามเงื่อนไข (ดัน Online ขึ้นก่อน -> เรียงตามรหัสคิวน้อยไปมาก)
-# -----------------------------------------------------------------
-
-@app.post("/api/telehealth/send")
-async def send_telehealth_message(msg: TelehealthMessage):
-    GLOBAL_TELEHEALTH_DB.append(msg.dict())
-    return {"success": True}
-
-@app.get("/api/telehealth/history")
-async def get_telehealth_history(patient_id: str):
-    return [c for c in GLOBAL_TELEHEALTH_DB if c["patient_id"] == patient_id]
-
-@app.get("/api/telehealth/patients")
-async def get_active_chat_patients():
-    """ 
-    ดึงรายชื่อคนไข้ทั้งหมด (รวมถึงผู้ใช้งานที่เพิ่งสมัครเข้ามาใหม่)
-    - ใครออนไลน์ (is_online == True) จะถูกจัดไว้บนสุด
-    - คนที่สมัครใหม่ / ออฟไลน์ (is_online == False) จะถูกจัดเรียงตามรหัสไอดีจากน้อยไปมากต่อท้ายลงมา
-    """
-    sessions = load_sessions()
-    
-    # เรียงลำดับ: ออนไลน์สแตนด์บายขึ้นก่อน (-1 คือ True, 0 คือ False) -> ตามด้วยอักษรรหัสคนไข้ (u001, u002, u003) จากน้อยไปมาก
-    sessions.sort(key=lambda x: (-1 if x.get("is_online") else 0, x.get("patient_id", "")))
-    
-    return sessions
-
-class FaceLoginRequest(BaseModel):
-    username: str   # <--- คาดหวังคำว่า username หรือ user_id?
-    image: str      # <--- คาดหวังข้อมูล Base64 ของรูปภาพ
-
 # 👤 1. API เส้นทางรับลงทะเบียนข้อมูลคนไข้ใหม่ (แก้ไขปัญหา 404 Not Found)
 @app.post("/api/patient/register")
 async def register_patient(payload: PatientRegisterRequest):
@@ -664,8 +632,8 @@ async def register_patient(payload: PatientRegisterRequest):
             img_data = payload.face_image.split("base64,")[1]
             img_bytes = base64.b64decode(img_data)
             
-            # 🎯 ปรับปรุง Path เป็นโฟลเดอร์ปลายทางตามที่คุณเจาะจง
-            target_dir = r"D:\VScode\medical_project\backend\patient_faces"
+            # ใช้โฟลเดอร์ผู้ป่วยในโปรเจกต์ปัจจุบันเพื่อให้ทำงานบนเครื่องหรือเซิร์ฟเวอร์เดียวกัน
+            target_dir = FACE_DIR
             
             # ตรวจสอบและสร้างโฟลเดอร์อัตโนมัติหากยังไม่มีในเครื่อง
             if not os.path.exists(target_dir):
@@ -728,7 +696,7 @@ async def register_patient(payload: PatientRegisterRequest):
 # 🛠️ 1. เพิ่ม Endpoint เพื่อส่งข้อมูลรายชื่อแพทย์จากไฟล์ doctors.json จริงออกไป
 @app.get("/api/doctors")
 async def get_all_doctors():
-    json_path = r"D:\VScode\medical_project\backend\doctors.json"
+    json_path = data_path("doctors.json")
     
     if not os.path.exists(json_path):
         raise HTTPException(status_code=404, detail="ไม่พบไฟล์คลังข้อมูล doctors.json ในระบบคอมพิวเตอร์ของคุณ")
@@ -742,6 +710,6 @@ async def get_all_doctors():
 
 # 🛠️ 2. เมาท์เปิดพอร์ตรูปภาพ Static เพื่อส่งภาพ doc-1.png, doc-2.png ไปแสดงบนหน้าเว็บหลัก
 # หมายเหตุ: หากโค้ดหลักของคุณเคย Mount ไปที่อื่นแล้ว ให้ตรวจเช็กชื่อโฟลเดอร์ให้ตรงกัน
-img_dir = r"D:\VScode\medical_project\backend\doctor_images"
+img_dir = os.path.join(PROJECT_DIR, "doctor_images")
 if os.path.exists(img_dir):
     app.mount("/doctor_images", StaticFiles(directory=img_dir), name="doctor_images")
