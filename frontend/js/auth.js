@@ -6,65 +6,28 @@
 let currentMode = 'login';
 let base64ImageString = null;
 
-// 🎯 ปรับปรุงจุดที่ 1: กำหนดที่อยู่เซิร์ฟเวอร์ Vercel หลังบ้านให้ชัดเจนถาวร
-const BACKEND_URL = "https://hamor-medical.vercel.app";
-
-// โค้ดตอนที่กดสแกนใบหน้าและส่งข้อมูลไปหลังบ้าน
-function sendFaceToBackend(inputUsername, base64Image) {
-    // แสดงสถานะว่ากำลังประมวลผล
-    console.log("🤖 กำลังส่งภาพไปวิเคราะห์ที่หลังบ้าน...");
-    
-    fetch(`${BACKEND_URL}/api/auth/login-face`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            username: inputUsername,
-            image: base64Image
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-        // 🚨 เช็กเงื่อนไขความปลอดภัยอย่างเข้มงวด
-        if (data && data.success === true) {
-            alert(`🎉 ยินดีต้อนรับคุณ ${data.name} เข้าสู่ระบบสำเร็จ!`);
-            
-            // บันทึกไอดีจริงลงเครื่อง เพื่อให้หน้าแดชบอร์ดไม่เป็น undefined
-            localStorage.setItem("patient_id", data.user_id); 
-            
-            // ย้ายหน้าเมื่อสแกนผ่านจริงเท่านั้น
-            window.location.href = "dashboard.html"; 
-        } else {
-            // ❌ ถ้าหลังบ้านบอกว่าพัง หรือสแกนไม่ติด ให้แจ้งเตือนและล็อกหน้าไว้
-            alert(`🛑 สแกนใบหน้าล้มเหลว: ${data.detail || "โปรดลองใหม่อีกครั้ง"}`);
-        }
-    })
-    .catch(err => {
-        console.error("Error:", err);
-        alert("🔌 เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์หลังบ้าน");
-    });
-}
-
 // ดึง Elements ที่ต้องใช้งานร่วมกันจากหน้าเว็บ (auth.html)
 const video = document.getElementById('webcam');
 const canvas = document.getElementById('capturedCanvas');
 const placeholder = document.getElementById('camPlaceholder');
 const captureBtn = document.getElementById('btnCapture');
 
-// 🎯 ฟังก์ชันเสกตัวหมุนให้ลอยครอบตำแหน่งของ "กล้อง" พอดีเป๊ะ
+// 🎯 ฟังก์ชันเสกตัวหมุนให้ลอยครอบตำแหน่งของ "กล้อง" พอดีเป๊ะ (ไม่ต้องยุ่งกับ HTML)
 function toggleCamSpinner(show, message = "กำลังประมวลผล...") {
     let spinnerBox = document.getElementById('camDynamicSpinner');
     
     if (show) {
+        // หา Element หลักที่เป็นตัวคลุมกล้อง (หาพื้นที่อ้างอิงเพื่อแปะ Spinner ลงไป)
         const targetContainer = video ? video.parentElement : null;
         if (!targetContainer) return;
 
+        // บังคับให้ Parent ของกล้องรองรับการซ้อนวัตถุแบบ Relative
         targetContainer.style.position = 'relative';
 
         if (!spinnerBox) {
             spinnerBox = document.createElement('div');
             spinnerBox.id = 'camDynamicSpinner';
+            // แต่งสไตล์ด้วย Tailwind CSS ให้ลอยอยู่บนตัวเฟรมกล้องแบบ Smooth
             spinnerBox.className = 'absolute inset-0 bg-slate-900/70 backdrop-blur-xs flex flex-col items-center justify-center text-white font-medium z-40 rounded-2xl gap-3 transition-all duration-300';
             spinnerBox.innerHTML = `
                 <div class="relative flex items-center justify-center">
@@ -91,9 +54,11 @@ function switchTab(mode) {
     stopWebcam();
     toggleCamSpinner(false);
     
+    // จัดการแสดงผลฟอร์ม
     document.getElementById('loginForm').classList.toggle('hidden', mode !== 'login');
     document.getElementById('registerForm').classList.toggle('hidden', mode !== 'register');
     
+    // จัดการสไตล์ของปุ่มแท็บ
     document.getElementById('tabLogin').className = mode === 'login' 
         ? 'flex-1 pb-3 font-bold text-teal-600 border-b-2 border-teal-600' 
         : 'flex-1 pb-3 font-medium text-slate-400';
@@ -102,8 +67,8 @@ function switchTab(mode) {
         : 'flex-1 pb-3 font-medium text-slate-400';
 }
 
-// 🎯 เติมคำว่า async ไว้หน้า function เพื่อให้ภายในฟังก์ชันใช้คำสั่ง await ได้อย่างถูกต้อง
-async function startWebcam() { 
+// 🔹 ฟังก์ชันเปิดใช้งานกล้องเว็บแคม
+async function startWebcam() {
     if (placeholder) placeholder.classList.add('hidden');
     if (video) video.classList.remove('hidden');
     if (canvas) canvas.classList.add('hidden');
@@ -112,7 +77,6 @@ async function startWebcam() {
     toggleCamSpinner(false);
 
     try {
-        // คราวนี้คำสั่ง await บรรทัดที่ 20 จะทำงานได้ปกติ ไม่เออเร่อแล้วครับ
         const stream = await navigator.mediaDevices.getUserMedia({ 
             video: { 
                 width: { ideal: 400 }, 
@@ -139,28 +103,34 @@ function stopWebcam() {
     toggleCamSpinner(false);
 }
 
-async function captureSnapshot() {
+// 📸 ฟังก์ชันจับภาพนิ่งจากสัญญาณวิดีโอ (Snapshot)
+function captureSnapshot() {
     if (!video) return;
     
+    // 🎯 สั่งแสดงวงกลมหมุนอนิเมชันคร่อมทับบนกล้องทันทีที่กด "📸 กดบันทึกภาพถ่ายใบหน้ามุมตรง"
     toggleCamSpinner(true, "⚡ กำลังบันทึกพิกัดใบหน้า...");
 
-    setTimeout(async () => { // 🎯 เติม async หน้า Arrow Function ตรงนี้ด้วยครับ
+    // หน่วงเวลา 60ms เพื่อยอมให้ UI วาดสปินเนอร์ขึ้นมาก่อนที่จะประมวลผลบิตแมปภาพขนาดใหญ่
+    setTimeout(() => {
         try {
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             
-            base64ImageString = canvas.toDataURL('image/jpeg').split(',')[1];
+            base64ImageString = canvas.toDataURL('image/png');
             
+            // แสดงรูปภาพที่บันทึกแล้วนิ่งไว้บนหน้าจอเพื่อความสวยงาม
             video.classList.add('hidden');
             canvas.classList.remove('hidden');
             captureBtn.classList.add('hidden');
 
             if (currentMode === 'login') {
+                // เปลี่ยนข้อความเป็นสถานะยิงปัญญาประดิษฐ์สแกนจับคู่ระเบียนคนไข้
                 toggleCamSpinner(true, "🔮 AI กำลังวิเคราะห์อัตลักษณ์ใบหน้า...");
-                await processFaceLogin(); // 🎯 เติม await หน้านี้ด้วย
+                processFaceLogin();
             } else {
+                // โหมดสมัครสมาชิก: ทำการซ่อนสปินเนอร์เพื่อให้คนไข้เห็นใบหน้าตัวเอง และกรอกฟอร์มต่อ
                 toggleCamSpinner(false);
                 alert("บันทึกพิกัดใบหน้าเรียบร้อย! กรุณากรอกฟอร์มต่อให้ครบถ้วนแล้วกดลงทะเบียน");
                 if (video.srcObject) video.srcObject.getTracks().forEach(track => track.stop());
@@ -192,8 +162,7 @@ async function submitRegister() {
 
     try {
         toggleCamSpinner(true, "👤 กำลังบันทึกเวชระเบียน...");
-        // 🎯 ยิงข้อมูลหาพาร์ท Vercel เต็มรูปแบบ
-        const res = await fetch(`${BACKEND_URL}/api/patient/register`, { 
+        const res = await fetch('/api/patient/register', { 
             method: 'POST', 
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -214,7 +183,7 @@ async function submitRegister() {
     }
 }
 
-// 🔑 ฟังก์ชันเข้าสู่ระบบด้วยรหัสผ่านปกติ (Password Login)
+// ⌨️ ฟังก์ชันเข้าสู่ระบบด้วยรหัสผ่านปกติ (Password Login)
 async function submitPasswordLogin() {
     const username = document.getElementById('loginUser').value.trim();
     const password = document.getElementById('loginPass').value.trim();
@@ -226,8 +195,7 @@ async function submitPasswordLogin() {
 
     try {
         toggleCamSpinner(true, "🔑 กำลังยืนยันรหัสผ่าน...");
-        // 🎯 ยิงข้อมูลหาพาร์ท Vercel เต็มรูปแบบ
-        const response = await fetch(`${BACKEND_URL}/api/auth/login-password`, {
+        const response = await fetch('/api/auth/login-password', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -253,9 +221,8 @@ async function submitPasswordLogin() {
 }
 
 // 🔹 ฟังก์ชันเรียกประมวลผลระบบสแกนใบหน้า
-// ✅ เติม async หน้า function และเติม await หน้าฟังก์ชันข้างใน
-async function submitFaceLogin() {
-    await processFaceLogin();
+function submitFaceLogin() {
+    processFaceLogin();
 }
 
 // 🔹 API: ล็อกอินด้วยระบบสแกนใบหน้า (Face Login Engine)
@@ -272,10 +239,10 @@ async function processFaceLogin() {
     };
 
     try {
+        // รักษาเอฟเฟกต์ตัวหมุนและปรับข้อความให้ชัดเจน
         toggleCamSpinner(true, "🔮 AI กำลังวิเคราะห์อัตลักษณ์ใบหน้า...");
 
-        // 🎯 ยิงข้อมูลหาพาร์ท Vercel เต็มรูปแบบ
-        const response = await fetch(`${BACKEND_URL}/api/auth/login-face`, {
+        const response = await fetch('/api/auth/login-face', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -284,6 +251,8 @@ async function processFaceLogin() {
         });
 
         const data = await response.json();
+        
+        // 🛑 เคลียร์ซ่อนตัวหมุนออกจากเฟร้มกล้องทันทีที่ได้รับข้อมูลส่งกลับจาก Backend
         toggleCamSpinner(false);
 
         if (response.ok && data.success) {
